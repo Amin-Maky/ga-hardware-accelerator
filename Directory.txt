@@ -1,0 +1,16 @@
+ga-hardware-accelerator/               	# Main repository root
+  ├── rtl/                      	# RTL only (no testbenches)
+  │   ├── ?
+  │   └── ?
+  ├── tb/                       	# All verification sources
+  │   └── sv/                   	# SystemVerilog testbenches
+  │       └── ?_tb.sv
+  ├── fpga/
+  │   ├── vivado                	# Vivado Tcl scripts
+  │   │   └── ?.tcl
+  │   └── build/                	# (gitignored) All Vivado outputs generated here
+  │       └── vivado_prj_?/
+  ├── README.md                 	# README
+  ├── Makefile                  	# Makefile
+  └── .git
+
