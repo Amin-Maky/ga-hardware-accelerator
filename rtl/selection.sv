@@ -1,24 +1,31 @@
 `timescale 1ns / 1ps
 //////////////////////////////////////////////////////////////////////////////////
-// Company: 
-// Engineer: 
+// Company: Academic Project
+// Engineer: Prof. Ali Mahani
 // 
-// Create Date:
-// Design Name: 
+// Create Date: Fall 2025
+// Design Name: Genetic Algorithm Accelerator
 // Module Name: selection
-// Project Name: 
-// Target Devices: 
-// Tool Versions: 
+// Project Name: GA_Prj
+// Target Devices: xc7vx485tffg1157-1 (Virtex-7)
+// Tool Versions: Vivado 2024.2
 // Description: 
+// Original baseline module for Roulette Wheel Selection in the Genetic Algorithm.
 // 
-// Dependencies: 
+// Note: This version contains several synthesis and logic flaws. The multiplication 
+// (random_value * total_fitness) is performed without an intermediate extended-width 
+// register, risking truncation. Additionally, the FSM lacks proper handshake 
+// synchronization (waiting for !start_selection) and lacks array bounds checking 
+// during the SPINNING state. Intended for student debugging and optimization.
+// 
+// Dependencies: lfsr_random
 // 
 // Revision:
-// Revision 0.01 - File Created
+// Revision 0.01 - File Created (Original baseline code)
 // Additional Comments:
+// Initial unoptimized and buggy version provided for academic RTL tasks.
 // 
 //////////////////////////////////////////////////////////////////////////////////
-
 
 module selection #(
     parameter CHROMOSOME_WIDTH = 8,

@@ -1,24 +1,36 @@
 `timescale 1ns / 1ps
 //////////////////////////////////////////////////////////////////////////////////
-// Company: 
-// Engineer: 
+// Company: Academic Project
+// Engineer: Prof. Ali Mahani
 // 
-// Create Date:
-// Design Name: 
-// Module Name: genetic_algorithm
-// Project Name: 
-// Target Devices: 
-// Tool Versions: 
+// Create Date: Fall 2025
+// Design Name: Genetic Algorithm Accelerator
+// Module Name: genetic_algorithm (Top-Level)
+// Project Name: GA_Prj
+// Target Devices: xc7vx485tffg1157-1 (Virtex-7)
+// Tool Versions: Vivado 2024.2
 // Description: 
+// Original baseline top-level module for the Genetic Algorithm hardware accelerator. 
+// Contains the raw Finite State Machine (FSM) implementation for standard GA steps 
+// (initialization, evaluation, selection, crossover, mutation, and replacement).
+// 
+// Note: This version contains deliberate synchronization bugs, memory read latency 
+// issues, and unoptimized paths intended for student debugging and enhancement.
 // 
 // Dependencies: 
+// - lfsr_random
+// - population_memory
+// - selection
+// - crossover
+// - mutation
+// - fitness_evaluator
 // 
 // Revision:
-// Revision 0.01 - File Created
+// Revision 0.01 - File Created (Original baseline code)
 // Additional Comments:
+// Initial buggy version provided for academic RTL debugging tasks.
 // 
 //////////////////////////////////////////////////////////////////////////////////
-
 
 module genetic_algorithm #(
     parameter CHROMOSOME_WIDTH = 8,

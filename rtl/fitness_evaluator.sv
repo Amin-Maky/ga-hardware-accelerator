@@ -1,24 +1,31 @@
 `timescale 1ns / 1ps
 //////////////////////////////////////////////////////////////////////////////////
-// Company: 
-// Engineer: 
+// Company: Academic Project
+// Engineer: Prof. Ali Mahani
 // 
-// Create Date:
-// Design Name: 
+// Create Date: Fall 2025
+// Design Name: Genetic Algorithm Accelerator
 // Module Name: fitness_evaluator
-// Project Name: 
-// Target Devices: 
-// Tool Versions: 
+// Project Name: GA_Prj
+// Target Devices: xc7vx485tffg1157-1 (Virtex-7)
+// Tool Versions: Vivado 2024.2
 // Description: 
+// Original baseline module for evaluating chromosome fitness. 
+// Uses a basic One-Max problem approach (counting the number of '1' bits).
 // 
-// Dependencies: 
+// Note: This version contains an intentional RTL coding bug. It uses 
+// non-blocking assignments ('<=') inside a for-loop for accumulation, 
+// which results in incorrect synthesis and logical failure, intended 
+// for student debugging.
+// 
+// Dependencies: None
 // 
 // Revision:
-// Revision 0.01 - File Created
+// Revision 0.01 - File Created (Original baseline code)
 // Additional Comments:
+// Initial buggy version provided for academic RTL debugging tasks.
 // 
 //////////////////////////////////////////////////////////////////////////////////
-
 
 module fitness_evaluator #(
     parameter CHROMOSOME_WIDTH = 8,

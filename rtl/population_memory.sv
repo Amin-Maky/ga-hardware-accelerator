@@ -1,24 +1,30 @@
 `timescale 1ns / 1ps
 //////////////////////////////////////////////////////////////////////////////////
-// Company: 
-// Engineer: 
+// Company: Academic Project
+// Engineer: Prof. Ali Mahani
 // 
-// Create Date:
-// Design Name: 
+// Create Date: Fall 2025
+// Design Name: Genetic Algorithm Accelerator
 // Module Name: population_memory
-// Project Name: 
-// Target Devices: 
-// Tool Versions: 
+// Project Name: GA_Prj
+// Target Devices: xc7vx485tffg1157-1 (Virtex-7)
+// Tool Versions: Vivado 2024.2
 // Description: 
+// Original baseline memory module for storing the genetic algorithm population.
+// Implements a simple synchronous write, asynchronous read memory array.
 // 
-// Dependencies: 
+// Note: This version lacks explicit synthesis directives. Depending on the 
+// POPULATION_SIZE, Vivado might infer Distributed RAM (using LUTs/FFs) 
+// instead of Block RAM, leading to inefficient resource utilization.
+// 
+// Dependencies: None
 // 
 // Revision:
-// Revision 0.01 - File Created
+// Revision 0.01 - File Created (Original baseline code)
 // Additional Comments:
+// Initial version provided for academic RTL optimization tasks.
 // 
 //////////////////////////////////////////////////////////////////////////////////
-
 
 module population_memory #(
     parameter CHROMOSOME_WIDTH = 8,

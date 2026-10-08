@@ -1,24 +1,31 @@
 `timescale 1ns / 1ps
 //////////////////////////////////////////////////////////////////////////////////
-// Company: 
-// Engineer: 
+// Company: Academic Project
+// Engineer: Prof. Ali Mahani
 // 
-// Create Date:
-// Design Name: 
+// Create Date: Fall 2025
+// Design Name: Genetic Algorithm Accelerator
 // Module Name: mutation
-// Project Name: 
-// Target Devices: 
-// Tool Versions: 
+// Project Name: GA_Prj
+// Target Devices: xc7vx485tffg1157-1 (Virtex-7)
+// Tool Versions: Vivado 2024.2
 // Description: 
+// Original baseline module for the mutation step in the Genetic Algorithm.
+// Iterates over the chromosome and flips bits based on a mutation probability.
 // 
-// Dependencies: 
+// Note: This version contains an intentional logic and width-mismatch bug. 
+// Inside the loop, a 1-bit value (mutation_mask[i]) is directly compared 
+// against an 8-bit threshold (mutation_rate), rendering the probability 
+// logic fundamentally flawed. Intended for student debugging.
+// 
+// Dependencies: None
 // 
 // Revision:
-// Revision 0.01 - File Created
+// Revision 0.01 - File Created (Original baseline code)
 // Additional Comments:
+// Initial buggy version provided for academic RTL debugging tasks.
 // 
 //////////////////////////////////////////////////////////////////////////////////
-
 
 module mutation #(
     parameter CHROMOSOME_WIDTH = 8
