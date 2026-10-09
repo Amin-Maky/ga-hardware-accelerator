@@ -1,7 +1,7 @@
 `timescale 1ns / 1ps
 //////////////////////////////////////////////////////////////////////////////////
 // Company: Academic Project
-// Engineer: Prof. Ali Mahani
+// Engineer: Original code by Prof. Ali Mahani, Debugged & Modified by Amin Maky
 // 
 // Create Date: Fall 2025
 // Design Name: Genetic Algorithm Accelerator
@@ -10,12 +10,15 @@
 // Target Devices: xc7vx485tffg1157-1 (Virtex-7)
 // Tool Versions: Vivado 2024.2
 // Description: 
-// Original baseline top-level module for the Genetic Algorithm hardware accelerator. 
-// Contains the raw Finite State Machine (FSM) implementation for standard GA steps 
-// (initialization, evaluation, selection, crossover, mutation, and replacement).
+// Top-level module for the Genetic Algorithm hardware accelerator. 
+// Implements the main Finite State Machine (FSM) to orchestrate population 
+// initialization, fitness evaluation, parent selection, crossover, mutation, 
+// and generational replacement (steady-state/elitism approach).
 // 
-// Note: This version contains deliberate synchronization bugs, memory read latency 
-// issues, and unoptimized paths intended for student debugging and enhancement.
+// Modifications by Amin Maky:
+// - Fixed FSM synchronization and memory read latencies (e.g., added WAIT_BEFORE_PARENT2).
+// - Debugged timing issues during selection, evaluation, and replacement phases.
+// - Cleaned up next-state logic and control signals.
 // 
 // Dependencies: 
 // - lfsr_random
@@ -26,14 +29,15 @@
 // - fitness_evaluator
 // 
 // Revision:
-// Revision 0.01 - File Created (Original baseline code)
+// Revision 0.01 - File Created (Original code provided by Prof. Mahani)
+// Revision 1.00 - Debugged, optimized, and fully functional FSM (Amin Maky)
 // Additional Comments:
-// Initial buggy version provided for academic RTL debugging tasks.
+// Version matches GitHub release v1.0.0.
 // 
 //////////////////////////////////////////////////////////////////////////////////
 
 module genetic_algorithm #(
-    parameter CHROMOSOME_WIDTH = 8,
+    parameter CHROMOSOME_WIDTH = 16,
     parameter POPULATION_SIZE = 16,
     parameter MAX_GENERATIONS = 100,
     parameter ADDR_WIDTH = $clog2(POPULATION_SIZE),
@@ -43,7 +47,7 @@ module genetic_algorithm #(
     input logic clk,
     input logic rst_n,
     input logic start_ga,
-    input logic [CHROMOSOME_WIDTH-1:0] initial_population [POPULATION_SIZE-1:0],
+    input logic [CHROMOSOME_WIDTH-1:0] initial_population,
     output logic [CHROMOSOME_WIDTH-1:0] best_chromosome,
     output logic [FITNESS_WIDTH-1:0] best_fitness,
     output logic ga_done
@@ -55,6 +59,7 @@ module genetic_algorithm #(
         EVALUATE_FITNESS,
         CALC_TOTAL_FITNESS,
         SELECT_PARENT1,
+        WAIT_BEFORE_PARENT2,
         SELECT_PARENT2,
         CROSSOVER,
         MUTATION,
@@ -67,6 +72,8 @@ module genetic_algorithm #(
     state_t state, next_state;
     
     // Counters and control signals
+    logic wait_one_clk;
+    logic [CHROMOSOME_WIDTH-1:0] chromosome_to_evaluate;
     logic [7:0] generation_count;
     logic [ADDR_WIDTH-1:0] individual_idx;
     logic [ADDR_WIDTH-1:0] worst_idx;
@@ -96,7 +103,7 @@ module genetic_algorithm #(
     // Random number generation for mutation and crossover
     logic lfsr_enable;
     logic [CHROMOSOME_WIDTH-1:0] random_value;
-    logic [2:0] crossover_point;
+    logic [$clog2(CHROMOSOME_WIDTH)-1:0] crossover_point;
     
     // Instantiate LFSR
     lfsr_random #(
@@ -163,7 +170,7 @@ module genetic_algorithm #(
         .rst_n(rst_n),
         .start_mutation(start_mutation),
         .child_in(child),
-        .mutation_mask(random_value),
+        .random_values(random_value),
         .mutation_rate(MUTATION_RATE),
         .child_out(mutated_child),
         .mutation_done(mutation_done)
@@ -177,7 +184,7 @@ module genetic_algorithm #(
         .clk(clk),
         .rst_n(rst_n),
         .start_evaluation(start_evaluation),
-        .chromosome(mem_read_data),
+        .chromosome(chromosome_to_evaluate),
         .fitness(child_fitness),
         .evaluation_done(evaluation_done)
     );
@@ -194,11 +201,12 @@ module genetic_algorithm #(
             worst_fitness <= {FITNESS_WIDTH{1'b1}}; // Max value
             ga_done <= 1'b0;
             total_fitness <= '0;
+            wait_one_clk <= 1'b0;
             
             // Reset control signals
-            start_selection <= 1'b0;
-            start_crossover <= 1'b0;
-            start_mutation <= 1'b0;
+            start_selection  <= 1'b0;
+            start_crossover  <= 1'b0;
+            start_mutation   <= 1'b0;
             start_evaluation <= 1'b0;
             mem_write_enable <= 1'b0;
         end else begin
@@ -216,7 +224,7 @@ module genetic_algorithm #(
                     // Load initial population from input
                     mem_write_enable <= 1'b1;
                     mem_write_addr <= individual_idx;
-                    mem_write_data <= initial_population[individual_idx];
+                    mem_write_data <= initial_population;
                     
                     if (individual_idx == POPULATION_SIZE-1) begin
                         individual_idx <= '0;
@@ -226,32 +234,40 @@ module genetic_algorithm #(
                 end
                 
                 EVALUATE_FITNESS: begin
+                    mem_write_enable <= 1'b0;
                     mem_read_addr <= individual_idx;
-                    start_evaluation <= 1'b1;
-                    
+                    wait_one_clk <= 1'b1;
+                    if (wait_one_clk) begin
+                        chromosome_to_evaluate <= mem_read_data;
+                        start_evaluation <= 1'b1;
+                    end
                     if (evaluation_done) begin
-                        start_evaluation <= 1'b0;
                         fitness_values[individual_idx] <= child_fitness;
-                        
-                        // Track best individual
+                        start_evaluation <= 1'b0;
+                        wait_one_clk <= 1'b0;
+
+                        // Track best
                         if (child_fitness > best_fitness) begin
                             best_fitness <= child_fitness;
-                            best_chromosome <= mem_read_data;
+                            best_chromosome <= chromosome_to_evaluate;
                         end
-                        
-                        // Track worst individual
+
+                        // Track worst
                         if (child_fitness < worst_fitness) begin
                             worst_fitness <= child_fitness;
                             worst_idx <= individual_idx;
                         end
-                        
+
                         if (individual_idx == POPULATION_SIZE-1) begin
                             individual_idx <= '0;
+                            total_fitness <= '0;
+                            start_evaluation <= 1'b0;
                         end else begin
                             individual_idx <= individual_idx + 1'b1;
                         end
                     end
                 end
+
                 
                 CALC_TOTAL_FITNESS: begin
                     // Calculate total fitness for selection
@@ -266,27 +282,34 @@ module genetic_algorithm #(
                 
                 SELECT_PARENT1: begin
                     start_selection <= 1'b1;
-                    
+
                     if (selection_done) begin
                         start_selection <= 1'b0;
                         mem_read_addr <= selected_parent;
-                        parent1 <= mem_read_data;
                     end
                 end
                 
+                WAIT_BEFORE_PARENT2: begin
+                    parent1 <= mem_read_data; // Dlay ...
+                end
+
                 SELECT_PARENT2: begin
                     start_selection <= 1'b1;
-                    
+
                     if (selection_done) begin
                         start_selection <= 1'b0;
                         mem_read_addr <= selected_parent;
+                    end
+
+                    if (!start_selection) begin
                         parent2 <= mem_read_data;
                     end
                 end
+
                 
                 CROSSOVER: begin
                     lfsr_enable <= 1'b1; // Generate random crossover point
-                    crossover_point <= random_value[2:0]; // Use 3 bits for crossover point
+                    crossover_point <= random_value[$clog2(CHROMOSOME_WIDTH)-1:0]; // Use 4 bits for crossover point
                     start_crossover <= 1'b1;
                     
                     if (crossover_done) begin
@@ -306,6 +329,7 @@ module genetic_algorithm #(
                 end
                 
                 EVALUATE_CHILD: begin
+                    chromosome_to_evaluate <= mutated_child;
                     start_evaluation <= 1'b1;
                     
                     if (evaluation_done) begin
@@ -376,8 +400,12 @@ module genetic_algorithm #(
             
             SELECT_PARENT1: begin
                 if (selection_done) begin
-                    next_state = SELECT_PARENT2;
+                    next_state = WAIT_BEFORE_PARENT2;
                 end
+            end
+            
+            WAIT_BEFORE_PARENT2: begin
+                next_state <= SELECT_PARENT2;
             end
             
             SELECT_PARENT2: begin
