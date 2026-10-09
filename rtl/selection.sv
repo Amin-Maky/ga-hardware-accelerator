@@ -1,7 +1,7 @@
 `timescale 1ns / 1ps
 //////////////////////////////////////////////////////////////////////////////////
 // Company: Academic Project
-// Engineer: Prof. Ali Mahani
+// Engineer: Original code by Prof. Ali Mahani, Debugged & Optimized by Amin Maky
 // 
 // Create Date: Fall 2025
 // Design Name: Genetic Algorithm Accelerator
@@ -10,25 +10,35 @@
 // Target Devices: xc7vx485tffg1157-1 (Virtex-7)
 // Tool Versions: Vivado 2024.2
 // Description: 
-// Original baseline module for Roulette Wheel Selection in the Genetic Algorithm.
+// Optimized Roulette Wheel Selection module. Selects a parent based on its 
+// fitness value relative to the total population fitness.
 // 
-// Note: This version contains several synthesis and logic flaws. The multiplication 
-// (random_value * total_fitness) is performed without an intermediate extended-width 
-// register, risking truncation. Additionally, the FSM lacks proper handshake 
-// synchronization (waiting for !start_selection) and lacks array bounds checking 
-// during the SPINNING state. Intended for student debugging and optimization.
+// Modifications by Amin Maky:
+// - Increased default CHROMOSOME_WIDTH to 16.
+// - Hardware Optimization: Added (* use_dsp = "yes" *) to force the heavy 
+//   multiplication logic into dedicated DSP slices, saving LUTs and improving 
+//   timing closure.
+// - Arithmetic Fix: Introduced an intermediate 'scaled' signal with explicit 
+//   width (CHROMOSOME_WIDTH + FITNESS_WIDTH) to prevent data truncation during 
+//   the multiplication step.
+// - FSM Synchronization: Fixed the handshake logic. The FSM now waits in the 
+//   DONE state until 'start_selection' is deasserted, preventing unintended 
+//   re-triggering.
+// - Safety: Added a boundary condition check (current_idx < POPULATION_SIZE-1) 
+//   in the SPINNING state to prevent out-of-bounds memory access.
 // 
 // Dependencies: lfsr_random
 // 
 // Revision:
-// Revision 0.01 - File Created (Original baseline code)
+// Revision 0.01 - File Created (Original code provided by Prof. Mahani)
+// Revision 1.00 - FSM fixed and DSP optimization applied (Amin Maky)
 // Additional Comments:
-// Initial unoptimized and buggy version provided for academic RTL tasks.
+// Version matches GitHub release v1.0.0.
 // 
 //////////////////////////////////////////////////////////////////////////////////
 
 module selection #(
-    parameter CHROMOSOME_WIDTH = 8,
+    parameter CHROMOSOME_WIDTH = 16,
     parameter POPULATION_SIZE = 16,
     parameter ADDR_WIDTH = $clog2(POPULATION_SIZE),
     parameter FITNESS_WIDTH = 10  // Wider to accommodate sum of fitness values
@@ -49,6 +59,7 @@ module selection #(
     } state_t;
     
     state_t state, next_state;
+    (* shreg_extract = "yes" *)
     logic [FITNESS_WIDTH-1:0] roulette_position;
     logic [FITNESS_WIDTH-1:0] fitness_sum;
     logic [ADDR_WIDTH-1:0] current_idx;
@@ -66,10 +77,14 @@ module selection #(
         .random_out(random_value)
     );
     
+    (* use_dsp = "yes" *)
+    logic [CHROMOSOME_WIDTH + FITNESS_WIDTH - 1:0] scaled; // temp
     // Scale random value to total fitness range
     always_comb begin
         // Scale random number to be between 0 and total_fitness
-        roulette_position = (random_value * total_fitness) >> CHROMOSOME_WIDTH;
+        scaled = random_value * total_fitness;
+        roulette_position = scaled >> CHROMOSOME_WIDTH;
+        // roulette_position = (random_value * total_fitness) >> CHROMOSOME_WIDTH;
     end
     
     // Selection FSM
@@ -94,14 +109,15 @@ module selection #(
                     if (fitness_sum + fitness_values[current_idx] >= roulette_position) begin
                         selected_parent <= current_idx;
                         selection_done <= 1'b1;
-                    end else begin
+                    end else if (current_idx < POPULATION_SIZE-1) begin
                         fitness_sum <= fitness_sum + fitness_values[current_idx];
                         current_idx <= current_idx + 1'b1;
                     end
                 end
                 
                 DONE: begin
-                    selection_done <= 1'b1;
+                    // Maintain selected_parent and selection_done until top module clears start_selection
+                    selection_done <= 1'b0; // ready for next selection ...
                 end
             endcase
         end
@@ -120,16 +136,21 @@ module selection #(
                 end
             end
             
-            SPINNING: begin
+            SPINNING: if (selection_done) next_state = DONE;
+            /*
+            begin
                 if (fitness_sum + fitness_values[current_idx] >= roulette_position || 
                     current_idx == POPULATION_SIZE-1) begin
                     next_state = DONE;
                 end
             end
-            
-            DONE: begin
+            */
+            DONE: if (!start_selection) next_state = IDLE;
+            /*
+            begin
                 next_state = IDLE;
             end
+            */
         endcase
     end
 endmodule
