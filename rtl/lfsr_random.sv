@@ -1,7 +1,7 @@
 `timescale 1ns / 1ps
 //////////////////////////////////////////////////////////////////////////////////
 // Company: Academic Project
-// Engineer: Prof. Ali Mahani
+// Engineer: Original code by Prof. Ali Mahani, Debugged & Modified by Amin Maky
 // 
 // Create Date: Fall 2025
 // Design Name: Genetic Algorithm Accelerator
@@ -10,25 +10,30 @@
 // Target Devices: xc7vx485tffg1157-1 (Virtex-7)
 // Tool Versions: Vivado 2024.2
 // Description: 
-// Original baseline Linear Feedback Shift Register (LFSR) module for 
-// pseudo-random number generation.
+// Fixed and parameterized Linear Feedback Shift Register (LFSR).
+// Generates pseudo-random numbers based on maximal-period polynomial taps.
 // 
-// Note: This version contains hardcoded feedback taps and a hardcoded 
-// reset seed (8'hFF) that do not scale with the WIDTH parameter. Changing 
-// the WIDTH in this version will break the maximal-length sequence or 
-// cause synthesis warnings, intended for student enhancement.
+// Modifications by Amin Maky:
+// - Increased default WIDTH to 16 bits to meet system requirements.
+// - Updated feedback polynomial taps to support 16-bit maximal-length sequence 
+//   (x^16 + x^14 + x^13 + x^11 + 1).
+// - Introduced a dynamic 'SEED' parameter using the replication operator 
+//   ({WIDTH{1'b1}}) to guarantee a valid, non-zero initialization state 
+//   regardless of the configured WIDTH, fixing the hardcoded seed bug.
 // 
 // Dependencies: None
 // 
 // Revision:
-// Revision 0.01 - File Created (Original baseline code)
+// Revision 0.01 - File Created (Original code provided by Prof. Mahani)
+// Revision 1.00 - Parameterized seed and updated to 16-bit (Amin Maky)
 // Additional Comments:
-// Initial unscalable version provided for academic RTL debugging tasks.
+// Version matches GitHub release v1.0.0.
 // 
 //////////////////////////////////////////////////////////////////////////////////
 
 module lfsr_random #(
-    parameter WIDTH = 8
+    parameter WIDTH = 16,
+    parameter SEED  = {WIDTH{1'b1}}  // Non-zero default seed
 )(
     input logic clk,
     input logic rst_n,
@@ -40,12 +45,16 @@ module lfsr_random #(
     logic [WIDTH-1:0] lfsr_reg;
     logic feedback;
     
-    assign feedback = lfsr_reg[7] ^ lfsr_reg[5] ^ lfsr_reg[4] ^ lfsr_reg[3];
+    // Simple fixed taps for WIDTH = 8; can extend for larger widths
+    //assign feedback = lfsr_reg[7] ^ lfsr_reg[5] ^ lfsr_reg[4] ^ lfsr_reg[3];
+    
+    // Simple fixed taps for WIDTH = 16; can extend for larger widths
+    assign feedback = lfsr_reg[15] ^ lfsr_reg[13] ^ lfsr_reg[12] ^ lfsr_reg[10];
     
     always_ff @(posedge clk or negedge rst_n) begin
         if (!rst_n) begin
             // Non-zero seed value
-            lfsr_reg <= 8'hFF;
+            lfsr_reg <= SEED;
         end else if (enable) begin
             // Shift right and insert feedback bit
             lfsr_reg <= {feedback, lfsr_reg[WIDTH-1:1]};

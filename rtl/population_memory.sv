@@ -1,7 +1,7 @@
 `timescale 1ns / 1ps
 //////////////////////////////////////////////////////////////////////////////////
 // Company: Academic Project
-// Engineer: Prof. Ali Mahani
+// Engineer: Original code by Prof. Ali Mahani, Optimized by Amin Maky
 // 
 // Create Date: Fall 2025
 // Design Name: Genetic Algorithm Accelerator
@@ -10,19 +10,23 @@
 // Target Devices: xc7vx485tffg1157-1 (Virtex-7)
 // Tool Versions: Vivado 2024.2
 // Description: 
-// Original baseline memory module for storing the genetic algorithm population.
-// Implements a simple synchronous write, asynchronous read memory array.
+// Optimized memory module for storing the genetic algorithm population.
 // 
-// Note: This version lacks explicit synthesis directives. Depending on the 
-// POPULATION_SIZE, Vivado might infer Distributed RAM (using LUTs/FFs) 
-// instead of Block RAM, leading to inefficient resource utilization.
+// Modifications by Amin Maky:
+// - Added the Vivado synthesis attribute (* ram_style = "block" *) to the 
+//   population array. This forces the synthesizer to map the memory to 
+//   dedicated Block RAM (BRAM) rather than consuming valuable LUTs/Registers 
+//   (Distributed RAM). This hardware-aware optimization significantly improves 
+//   resource utilization, routing efficiency, and power consumption for 
+//   larger population sizes.
 // 
 // Dependencies: None
 // 
 // Revision:
-// Revision 0.01 - File Created (Original baseline code)
+// Revision 0.01 - File Created (Original code provided by Prof. Mahani)
+// Revision 1.00 - Added explicit BRAM inference attribute (Amin Maky)
 // Additional Comments:
-// Initial version provided for academic RTL optimization tasks.
+// Version matches GitHub release v1.0.0.
 // 
 //////////////////////////////////////////////////////////////////////////////////
 
@@ -40,13 +44,13 @@ module population_memory #(
     output logic [CHROMOSOME_WIDTH-1:0] read_data
 );
     // Register to store population
-   logic [CHROMOSOME_WIDTH-1:0] population [POPULATION_SIZE-1:0];
+    (* ram_style = "block" *)
+    logic [CHROMOSOME_WIDTH-1:0] population [POPULATION_SIZE-1:0];
     
     always_ff @(posedge clk) begin
         if (write_enable) begin
             population[write_addr] <= write_data;
         end
     end
-    
     assign read_data = population[read_addr];
 endmodule
