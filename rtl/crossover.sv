@@ -19,8 +19,6 @@
 //   bitwise mask generated via combinational logic shifting.
 // - Parameterized 'crossover_point' width using $clog2(CHROMOSOME_WIDTH).
 // - Added boundary constraints (0 and max width) for the crossover point.
-// - Guided synthesis tool using 'shreg_extract' attribute for optimal mapping.
-// 
 // Dependencies: None
 // 
 // Revision:
@@ -45,7 +43,6 @@ module crossover #(
 );
 
     logic [$clog2(CHROMOSOME_WIDTH):0] cp; // temp
-    (* shreg_extract = "yes" *)
     logic [CHROMOSOME_WIDTH-1:0] mask;
     logic [CHROMOSOME_WIDTH-1:0] mixed;
     

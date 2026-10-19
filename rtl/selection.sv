@@ -15,18 +15,15 @@
 // 
 // Modifications by Amin Maky:
 // - Increased default CHROMOSOME_WIDTH to 16.
-// - Hardware Optimization: Added (* use_dsp = "yes" *) to force the heavy 
-//   multiplication logic into dedicated DSP slices, saving LUTs and improving 
-//   timing closure.
+// - Hardware Optimization: Added (* use_dsp = "yes" *) to map the multiplication 
+//   logic to dedicated DSP slices, significantly reducing LUT utilization.
 // - Arithmetic Fix: Introduced an intermediate 'scaled' signal with explicit 
-//   width (CHROMOSOME_WIDTH + FITNESS_WIDTH) to prevent data truncation during 
-//   the multiplication step.
-// - FSM Synchronization: Fixed the handshake logic. The FSM now waits in the 
-//   DONE state until 'start_selection' is deasserted, preventing unintended 
-//   re-triggering.
+//   width (CHROMOSOME_WIDTH + FITNESS_WIDTH) to prevent bit truncation during multiplication.
+// - FSM Synchronization: Improved handshake logic by holding the FSM in the DONE 
+//   state until 'start_selection' is deasserted, preventing race conditions.
 // - Safety: Added a boundary condition check (current_idx < POPULATION_SIZE-1) 
-//   in the SPINNING state to prevent out-of-bounds memory access.
-// 
+//   in the SPINNING state to prevent out-of-bounds array access.
+//
 // Dependencies: lfsr_random
 // 
 // Revision:
@@ -59,7 +56,6 @@ module selection #(
     } state_t;
     
     state_t state, next_state;
-    (* shreg_extract = "yes" *)
     logic [FITNESS_WIDTH-1:0] roulette_position;
     logic [FITNESS_WIDTH-1:0] fitness_sum;
     logic [ADDR_WIDTH-1:0] current_idx;
