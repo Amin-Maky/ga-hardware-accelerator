@@ -1,16 +1,26 @@
 ga-hardware-accelerator/               	# Main repository root
-  ├── rtl/                      	# RTL only (no testbenches)
-  │   ├── ?
-  │   └── ?
-  ├── tb/                       	# All verification sources
-  │   └── sv/                   	# SystemVerilog testbenches
-  │       └── ?_tb.sv
   ├── fpga/
   │   ├── vivado                	# Vivado Tcl scripts
-  │   │   └── ?.tcl
+  │   │   └── Ga_Prj.tcl
   │   └── build/                	# (gitignored) All Vivado outputs generated here
-  │       └── vivado_prj_?/
-  ├── README.md                 	# README
+  │       └── Ga_Prj/
+  ├── rtl/                      	# RTL only (no testbenches)
+  │   ├── crossover.sv
+  │   ├── fitness_evaluator.sv
+  │   ├── genetic_algorithm.sv
+  │   ├── lfsr_random.sv
+  │   ├── mutation.sv
+  │   ├── population_memory.sv
+  │   └── selection.sv
+  ├── scripts/
+  │   └── block-diagram
+  │       └── GA-Diagram.drawio
+  ├── tb/                       	# All verification sources
+  │   └── sv/                   	# SystemVerilog testbenches
+  │       └── tb_genetic_algorithm_smoke.sv
+  ├── Directory.txt
+  ├── LICENSE
   ├── Makefile                  	# Makefile
-  └── .git
+  ├── README.md                 	# README
+  └── .gitignore
 

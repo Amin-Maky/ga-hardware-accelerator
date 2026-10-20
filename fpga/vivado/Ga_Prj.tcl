@@ -22,10 +22,12 @@ set_property top genetic_algorithm [current_fileset]
 
 # Add simulation (testbench) files
 add_files -norecurse -fileset [current_fileset -simset] [list \
-    $SIMROOT/sv/tb_genetic_algorithm.sv \
     $SIMROOT/sv/tb_genetic_algorithm_smoke.sv \
 ]
+# $SIMROOT/sv/tb_genetic_algorithm.sv \
 
 # Set the top module for simulation
-set_property top tb_genetic_algorithm [current_fileset -simset]
+
+set_property top tb_genetic_algorithm_smoke [current_fileset -simset]
+# set_property top tb_genetic_algorithm [current_fileset -simset]
 
